@@ -4,8 +4,8 @@
 // =============================================================================
 
 // call the packages we need
-var express    = require('express');        // call express
-var app        = express();                 // define our app using express
+var express    = require('express');
+var app        = express();
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var TennisRequest = require('./models/requests');
@@ -33,7 +33,7 @@ router.route('/requests')
 		var tennisRequest = new TennisRequest();
 		tennisRequest.name = request.body.name;
 		tennisRequest.description = request.body.description;
-		tennisRequest.contacted = request.body.contacted;
+		tennisRequest.contacted = false;
 		tennisRequest.start = request.body.start;
 		tennisRequest.stop = request.body.stop;
 		tennisRequest.lat = request.body.lat;
@@ -80,7 +80,35 @@ router.route('/requests/:request_id')
 
             response.json({ message: 'Successfully deleted' });
         });
-    });
+    })
+    .update(function(request, response){
+    	TennisRequest.findById(request.params.request_id, function(err, tennisRequest){
+    		if(err){
+    			response.send(err);
+    		} else {
+    			tennisRequest.name = request.body.name;
+				tennisRequest.description = request.body.description;
+				tennisRequest.start = request.body.start;
+				tennisRequest.stop = request.body.stop;
+				tennisRequest.lat = request.body.lat;
+				tennisRequest.lng = request.body.lng;
+				// tennisRequest.skill = request.body.skill;	
+				// tennisRequest.isMale = request.body.isMale;
+				// tennisRequest.age = request.body.age;
+				// tennisRequest.rightHanded = request.body.rightHanded;
+				// tennisRequest.typeOfPlayer = request.body.typeOfPlayer;
+				tennisRequest.save(function(err, tennisRequest){
+					if (err) {
+						response.sent(err);
+					} else {
+						response.json({message: "request saved successfully"})
+					}
+				}
+    		}
+    			
+
+    	})
+    })
 
 // more routes for our API will happen here
 
