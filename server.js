@@ -28,27 +28,29 @@ router.get('/', function(request, response) {
 });
 
 router.route('/requests')
+	// create a request
 	.post(function(request, response){
 		var tennisRequest = new TennisRequest();
 		tennisRequest.name = request.body.name;
-		tennisRequest.skill = request.body.skill;		
-		tennisRequest.isMale = request.body.isMale;
-		tennisRequest.age = request.body.age;
+		// tennisRequest.skill = request.body.skill;	
+		// tennisRequest.isMale = request.body.isMale;
+		// tennisRequest.age = request.body.age;
 		tennisRequest.description = request.body.description;
-		tennisRequest.rightHanded = request.body.rightHanded;
-		tennisRequest.typeOfPlayer = request.body.typeOfPlayer;
+		// tennisRequest.rightHanded = request.body.rightHanded;
+		// tennisRequest.typeOfPlayer = request.body.typeOfPlayer;
 		tennisRequest.contacted = request.body.contacted;
+		tennisRequest.time = request.body.time;
 		// tennisRequest.lat = request.body.lat;
 		// tennisRequest.lng = request.body.lng;
 		tennisRequest.save(function(err, tennisRequest){
 			if (err) {
 				response.sent(err);
 			} else {
-				response.json({message: "bear saved successfully", id: tennisRequest.id})
+				response.json({message: "request saved successfully", id: tennisRequest.id})
 			}
 		});
 	})
-
+	// get all tennis requests
 	.get(function(req, res) {
         TennisRequest.find(function(err, tennisRequest) {
             if (err)
@@ -59,11 +61,23 @@ router.route('/requests')
     });
 
 router.route('/requests/:request_id')
+	// get the request by id. Read info
     .get(function(request, response) {
-        Bear.findById(request.params.request_id, function(err, tennisRequest) {
+        TennisRequest.findById(request.params.request_id, function(err, tennisRequest) {
             if (err)
                 response.send(err);
             response.json(tennisRequest);
+        });
+    })
+    // delete the request. no longer needed
+    .delete(function(request, response) {
+        TennisRequest.remove({
+            _id: request.params.request_id
+        }, function(err, tennisRequest) {
+            if (err)
+                response.send(err);
+
+            response.json({ message: 'Successfully deleted' });
         });
     });
 

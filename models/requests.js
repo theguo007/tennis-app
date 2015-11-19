@@ -2,13 +2,13 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var requestSchema = new Schema({
 	name: String,
-	skill: Number
-	isMale: boolean,
+	skill: Number,
+	ismale: Boolean,
 	age: Number,
 	description: String,
-	rightHanded: boolean,
-	typeOfPlayer: Number,
-	contacted: boolean,
+	righthanded: Boolean,
+	typeofplayer: Number,
+	contacted: Boolean,
 	// lat: String, //must validate both lat and lng
 	// lng: String
 });
