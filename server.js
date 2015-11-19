@@ -32,16 +32,17 @@ router.route('/requests')
 	.post(function(request, response){
 		var tennisRequest = new TennisRequest();
 		tennisRequest.name = request.body.name;
+		tennisRequest.description = request.body.description;
+		tennisRequest.contacted = request.body.contacted;
+		tennisRequest.start = request.body.start;
+		tennisRequest.stop = request.body.stop;
+		tennisRequest.lat = request.body.lat;
+		tennisRequest.lng = request.body.lng;
 		// tennisRequest.skill = request.body.skill;	
 		// tennisRequest.isMale = request.body.isMale;
 		// tennisRequest.age = request.body.age;
-		tennisRequest.description = request.body.description;
 		// tennisRequest.rightHanded = request.body.rightHanded;
 		// tennisRequest.typeOfPlayer = request.body.typeOfPlayer;
-		tennisRequest.contacted = request.body.contacted;
-		tennisRequest.time = request.body.time;
-		// tennisRequest.lat = request.body.lat;
-		// tennisRequest.lng = request.body.lng;
 		tennisRequest.save(function(err, tennisRequest){
 			if (err) {
 				response.sent(err);
