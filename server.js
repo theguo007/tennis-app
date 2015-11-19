@@ -104,11 +104,41 @@ router.route('/requests/:request_id')
 						response.json({message: "request saved successfully"})
 					}
 				}
-    		}
-    			
+    		}    		
+    	});
+    });
+// Used when someone accepts a tennis request
+router.route('/requests/:request_id/contact'){
+	TennisRequest.findById(request.params.request_id, function(err, tennisRequest){
+		if(err){
+			response.send(err);
+		} else {
+			tennisRequest.contacted = true;
+		tennisRequest.save(function(err, tennisRequest){
+			if (err) {
+				response.sent(err);
+			} else {
+				response.json({message: "request contacted"});
+			}
+		}
+	}
+}
 
-    	})
-    })
+// router.route('/requests/:request_id/reopen'){
+// 	TennisRequest.findById(request.params.request_id, function(err, tennisRequest){
+// 		if(err){
+// 			response.send(err);
+// 		} else {
+// 			tennisRequest.contacted = false;
+// 		tennisRequest.save(function(err, tennisRequest){
+// 			if (err) {
+// 				response.sent(err);
+// 			} else {
+// 				response.json({message: "request contact declined"});
+// 			}
+// 		}
+// 	}
+// }
 
 // more routes for our API will happen here
 
