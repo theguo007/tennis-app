@@ -59,7 +59,6 @@ router.route('/requests')
         TennisRequest.find(function(err, tennisRequest) {
             if (err)
                 response.send(err);
-
             response.json(tennisRequest);
         });
     });
@@ -148,7 +147,6 @@ router.route('/messages')
 				                console.log("Successfully added");
 					        }
 						});
-						tennisRequest.messageIds = request.body.contactMessage;
 						tennisRequest.save(function(err, tennisRequest){
 							if (err) {
 								response.sent(err);
@@ -161,14 +159,23 @@ router.route('/messages')
 				});			
 			}
 		})
-	// })
-	// .get(function(request, response){
-	// 	TennisMessage.find(function(err, tennisMessage) {
- //            if (err)
- //                response.send(err);
-
- //            response.json(tennisMessage);
- //        });
+	})
+	.get(function(request, response){
+		TennisMessage.find({ requestId: request.body.requestId }, function(err, tennisMessage) {
+            if (err)
+                response.send(err);
+            if (tennisMessage != null){
+            	TennisRequest.findById(tennisMessage.requestId, function(err, tennisRequest) {
+		            tennisRequest.newMessage = false;	           
+		            tennisRequest.save(function(err, tennisRequest){
+		            	if (err) {
+							response.sent(err);
+						}
+		        	});
+	        	});
+            }      
+            response.json(tennisMessage);
+        });
 	});
 
 // routes for the message model
@@ -178,15 +185,7 @@ router.route('/messages/:message_id')
         TennisMessage.findById(request.params.message_id, function(err, tennisMessage) {
             if (err)
                 response.send(err);
-            //Update the tennis request
-            TennisRequest.findById(tennisMessage.requestId, function(err, tennisRequest) {
-	            tennisRequest.newMessage = false;	           
-	            tennisRequest.save(function(err, tennisRequest){
-	            	if (err) {
-						response.sent(err);
-					}
-	        	});
-	        });
+            //Update the tennis request          
         	// response for the message
             response.json(tennisMessage);
         });
