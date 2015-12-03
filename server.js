@@ -9,7 +9,7 @@ var app        = express();
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var TennisRequest = require('./models/requests');
-var TennisMessage = require('/models/message');
+var TennisMessage = require('./models/messages');
 mongoose.connect('mongodb://localhost/tennis');
 
 // configure app to use bodyParser()
@@ -54,12 +54,12 @@ router.route('/requests')
 		});
 	})
 	// get all tennis requests
-	.get(function(req, res) {
+	.get(function(request, response) {
         TennisRequest.find(function(err, tennisRequest) {
             if (err)
-                res.send(err);
+                response.send(err);
 
-            res.json(tennisRequest);
+            response.json(tennisRequest);
         });
     });
 
@@ -71,7 +71,7 @@ router.route('/requests/:request_id')
                 response.send(err);
             response.json(tennisRequest);
         });
-    }).
+    })
     // delete the request. Also make sure to delete all messages.
     .delete(function(request, response) {
         TennisRequest.remove({
@@ -91,7 +91,7 @@ router.route('/requests/:request_id')
         });
     })
     // Update information about the request
-    .update(function(request, response){
+    .put(function(request, response){
     	TennisRequest.findById(request.params.request_id, function(err, tennisRequest){
     		if(err){
     			response.send(err);
@@ -170,7 +170,7 @@ router.route('/messages/:message_id')
 	            tennisReqest.save(function(err, tennisRequest){
 	            	if (err) {
 						response.sent(err);
-					})
+					}
 	        	});
 	        });
         	// response for the message
