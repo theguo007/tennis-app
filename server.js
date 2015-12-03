@@ -9,6 +9,7 @@ var app        = express();
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var TennisRequest = require('./models/requests');
+var TennisMessage = require('/models/message');
 mongoose.connect('mongodb://localhost/tennis');
 
 // configure app to use bodyParser()
@@ -27,6 +28,7 @@ router.get('/', function(request, response) {
     response.json({ message: 'hooray! welcome to our tennis request api!' });   
 });
 
+//API's for the request model
 router.route('/requests')
 	// create a request
 	.post(function(request, response){
@@ -34,6 +36,7 @@ router.route('/requests')
 		tennisRequest.name = request.body.name;
 		tennisRequest.description = request.body.description;
 		tennisRequest.contacted = false;
+		tennisRequest.contactMessage = null;
 		tennisRequest.start = request.body.start;
 		tennisRequest.stop = request.body.stop;
 		tennisRequest.lat = request.body.lat;
@@ -81,6 +84,7 @@ router.route('/requests/:request_id')
             response.json({ message: 'Successfully deleted' });
         });
     })
+    // Update information about the request
     .update(function(request, response){
     	TennisRequest.findById(request.params.request_id, function(err, tennisRequest){
     		if(err){
@@ -101,46 +105,73 @@ router.route('/requests/:request_id')
 					if (err) {
 						response.sent(err);
 					} else {
-						response.json({message: "request saved successfully"})
+						response.json({message: "request saved successfully"});
 					}
-				}
+				});
     		}    		
     	});
     });
-// Used when someone accepts a tennis request
-router.route('/requests/:request_id/contact'){
-	TennisRequest.findById(request.params.request_id, function(err, tennisRequest){
-		if(err){
-			response.send(err);
-		} else {
-			tennisRequest.contacted = true;
-		tennisRequest.save(function(err, tennisRequest){
-			if (err) {
-				response.sent(err);
+// Used when someone contacts a tennis request
+router.route('/requests/:request_id/contact')
+	.update(function(request,response){
+		TennisRequest.findById(request.params.request_id, function(err, tennisRequest){
+			if(err){
+				response.send(err);
 			} else {
-				response.json({message: "request contacted"});
+				//create a new message
+				var tennisMessage = new TennisMessage();
+				tennisMessage.message = request.body.message;
+				tennisMessage.phone = request.body.phone;
+				tennisMessage.requestId = request.params.request_id;				
+				tennisMessage.save(function(err, message){
+					if (err) {
+						response.sent(err);
+					} else {
+						//edit current tennisRequest
+						tennisRequest.contacted = true;
+						TennisRequest.findByIdAndUpdate(tennisRequest._id,{ $push: { messageIds: message._id }}, function(err){
+							if (err) {
+				                console.log(err);
+					        } else {
+				                console.log("Successfully added");
+					        }
+						});
+						tennisRequest.messageIds = request.body.contactMessage;
+						tennisRequest.save(function(err, tennisRequest){
+							if (err) {
+								response.sent(err);
+							} else {
+								//response returns the id for the message.
+								response.json({message: "message saved successfully", id: tennisMessage.id})
+							}
+						});						
+					}
+				});			
 			}
-		}
-	}
-}
+		});
+	});
 
-// router.route('/requests/:request_id/reopen'){
-// 	TennisRequest.findById(request.params.request_id, function(err, tennisRequest){
-// 		if(err){
-// 			response.send(err);
-// 		} else {
-// 			tennisRequest.contacted = false;
-// 		tennisRequest.save(function(err, tennisRequest){
-// 			if (err) {
-// 				response.sent(err);
-// 			} else {
-// 				response.json({message: "request contact declined"});
-// 			}
-// 		}
-// 	}
-// }
+// routes for the message model
+router.route('/messages/:message_id')
+	//delete the message
+	.delete(function(request, response) {
+        TennisMessage.remove({
+            _id: request.params.message_id
+        }, function(err, tennisMessage) {
+            if (err)
+                response.send(err);
 
-// more routes for our API will happen here
+            response.json({ message: 'Successfully deleted' });
+        });
+    })
+	// returns phone number Done by the person who posts the request. This should return the number of the messager
+	.get(function(request, response) {
+        TennisMessage.findById(request.params.message_id, function(err, tennisMessage) {
+            if (err)
+                response.send(err);
+            response.json(tennisMessage);
+        });
+    });
 
 // REGISTER OUR ROUTES -------------------------------
 // all of our routes will be prefixed with /api
