@@ -35,8 +35,7 @@ router.route('/requests')
 		var tennisRequest = new TennisRequest();
 		tennisRequest.name = request.body.name;
 		tennisRequest.description = request.body.description;
-		tennisRequest.contacted = false;
-		tennisRequest.contactMessage = null;
+		tennisRequest.newMessage = false;
 		tennisRequest.start = request.body.start;
 		tennisRequest.stop = request.body.stop;
 		tennisRequest.lat = request.body.lat;
@@ -72,15 +71,22 @@ router.route('/requests/:request_id')
                 response.send(err);
             response.json(tennisRequest);
         });
-    })
-    // delete the request. no longer needed
+    }).
+    // delete the request. Also make sure to delete all messages.
     .delete(function(request, response) {
         TennisRequest.remove({
             _id: request.params.request_id
         }, function(err, tennisRequest) {
+        	for(i = 0; i < tennisRequest.messageIds.length; i++){
+        		TennisMessage.remove({
+		            _id: tennisRequest.messageIds[i]
+		        }, function(err, tennisMessage) {
+		            if (err)
+		                response.send(err);
+		        });
+        	}
             if (err)
                 response.send(err);
-
             response.json({ message: 'Successfully deleted' });
         });
     })
@@ -112,9 +118,9 @@ router.route('/requests/:request_id')
     	});
     });
 // Used when someone contacts a tennis request
-router.route('/requests/:request_id/contact')
-	.update(function(request,response){
-		TennisRequest.findById(request.params.request_id, function(err, tennisRequest){
+router.route('/messages')
+	.post(function(request,response){
+		TennisRequest.findById(request.body.request_id, function(err, tennisRequest){
 			if(err){
 				response.send(err);
 			} else {
@@ -122,13 +128,13 @@ router.route('/requests/:request_id/contact')
 				var tennisMessage = new TennisMessage();
 				tennisMessage.message = request.body.message;
 				tennisMessage.phone = request.body.phone;
-				tennisMessage.requestId = request.params.request_id;				
+				tennisMessage.requestId = request.body.request_id;				
 				tennisMessage.save(function(err, message){
 					if (err) {
 						response.sent(err);
 					} else {
 						//edit current tennisRequest
-						tennisRequest.contacted = true;
+						tennisRequest.newMessage = true;
 						TennisRequest.findByIdAndUpdate(tennisRequest._id,{ $push: { messageIds: message._id }}, function(err){
 							if (err) {
 				                console.log(err);
@@ -153,22 +159,21 @@ router.route('/requests/:request_id/contact')
 
 // routes for the message model
 router.route('/messages/:message_id')
-	//delete the message
-	.delete(function(request, response) {
-        TennisMessage.remove({
-            _id: request.params.message_id
-        }, function(err, tennisMessage) {
-            if (err)
-                response.send(err);
-
-            response.json({ message: 'Successfully deleted' });
-        });
-    })
-	// returns phone number Done by the person who posts the request. This should return the number of the messager
+	// returns the message to the tennis requester. "Falsifies" the newMessage part in tennis request
 	.get(function(request, response) {
         TennisMessage.findById(request.params.message_id, function(err, tennisMessage) {
             if (err)
                 response.send(err);
+            //Update the tennis request
+            TennisRequest.findById(tennisMessage.requestId, function(err, tennisRequest) {
+	            tennisRequest.newMessage = false;
+	            tennisReqest.save(function(err, tennisRequest){
+	            	if (err) {
+						response.sent(err);
+					})
+	        	});
+	        });
+        	// response for the message
             response.json(tennisMessage);
         });
     });
