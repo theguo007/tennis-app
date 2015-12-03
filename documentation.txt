@@ -20,10 +20,10 @@ get /requests/:request_id - returns the information of a request. Used to get sp
 delete /requests/:request_id - deletes a request and all messages associated with it. Automatically does it at the end of the day
 
 
-update /requests/:request_id - updates information about the request. See above with the post /requests
+put /requests/:request_id - updates information about the request. See above with the post /requests
 
 
-update /messages - creates a new message. You need not only message information but also the id of the request that the message is attached to.
+post /messages - creates a new message. You need not only message information but also the id of the request that the message is attached to.
 
 message - the message that you want to send the requester
 phone - phone number that you can be contacted by

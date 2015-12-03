@@ -36,6 +36,7 @@ router.route('/requests')
 		tennisRequest.name = request.body.name;
 		tennisRequest.description = request.body.description;
 		tennisRequest.newMessage = false;
+		tennisRequest.messageIds = [];
 		tennisRequest.start = request.body.start;
 		tennisRequest.stop = request.body.stop;
 		tennisRequest.lat = request.body.lat;
@@ -69,22 +70,27 @@ router.route('/requests/:request_id')
         TennisRequest.findById(request.params.request_id, function(err, tennisRequest) {
             if (err)
                 response.send(err);
-            response.json(tennisRequest);
+            response.json(tennisRequest);            
         });
     })
     // delete the request. Also make sure to delete all messages.
     .delete(function(request, response) {
-        TennisRequest.remove({
-            _id: request.params.request_id
-        }, function(err, tennisRequest) {
-        	for(i = 0; i < tennisRequest.messageIds.length; i++){
-        		TennisMessage.remove({
+    	TennisRequest.findById(request.params.request_id, function(err, tennisRequest) {
+            if (err)
+                response.send(err);
+            console.log(tennisRequest.messageIds.length);
+            for(i = 0; i < tennisRequest.messageIds.length; i++){
+	    		TennisMessage.remove({
 		            _id: tennisRequest.messageIds[i]
 		        }, function(err, tennisMessage) {
 		            if (err)
 		                response.send(err);
 		        });
-        	}
+	    	}
+        });		    
+        TennisRequest.remove({
+            _id: request.params.request_id
+        }, function(err, tennisRequest) {
             if (err)
                 response.send(err);
             response.json({ message: 'Successfully deleted' });
@@ -120,7 +126,7 @@ router.route('/requests/:request_id')
 // Used when someone contacts a tennis request
 router.route('/messages')
 	.post(function(request,response){
-		TennisRequest.findById(request.body.request_id, function(err, tennisRequest){
+		TennisRequest.findById(request.body.requestId, function(err, tennisRequest){
 			if(err){
 				response.send(err);
 			} else {
@@ -128,14 +134,14 @@ router.route('/messages')
 				var tennisMessage = new TennisMessage();
 				tennisMessage.message = request.body.message;
 				tennisMessage.phone = request.body.phone;
-				tennisMessage.requestId = request.body.request_id;				
+				tennisMessage.requestId = request.body.requestId;				
 				tennisMessage.save(function(err, message){
 					if (err) {
 						response.sent(err);
 					} else {
 						//edit current tennisRequest
 						tennisRequest.newMessage = true;
-						TennisRequest.findByIdAndUpdate(tennisRequest._id,{ $push: { messageIds: message._id }}, function(err){
+						TennisRequest.findByIdAndUpdate(tennisRequest._id, { $push: { messageIds: tennisMessage._id }}, function(err){
 							if (err) {
 				                console.log(err);
 					        } else {
@@ -154,7 +160,15 @@ router.route('/messages')
 					}
 				});			
 			}
-		});
+		})
+	// })
+	// .get(function(request, response){
+	// 	TennisMessage.find(function(err, tennisMessage) {
+ //            if (err)
+ //                response.send(err);
+
+ //            response.json(tennisMessage);
+ //        });
 	});
 
 // routes for the message model
@@ -166,8 +180,8 @@ router.route('/messages/:message_id')
                 response.send(err);
             //Update the tennis request
             TennisRequest.findById(tennisMessage.requestId, function(err, tennisRequest) {
-	            tennisRequest.newMessage = false;
-	            tennisReqest.save(function(err, tennisRequest){
+	            tennisRequest.newMessage = false;	           
+	            tennisRequest.save(function(err, tennisRequest){
 	            	if (err) {
 						response.sent(err);
 					}
@@ -176,6 +190,15 @@ router.route('/messages/:message_id')
         	// response for the message
             response.json(tennisMessage);
         });
+    // })
+  //   .delete(function(request, response) {
+		// TennisMessage.remove({
+  //           _id: request.params.message_id
+  //       }, function(err, tennisMessage) {
+  //           if (err)
+  //               response.send(err);
+  //           response.json({ message: 'Successfully deleted' });
+  //       });
     });
 
 // REGISTER OUR ROUTES -------------------------------
@@ -186,3 +209,8 @@ app.use('/api', router);
 // =============================================================================
 app.listen(port);
 console.log('Magic happens on port ' + port);
+
+/*
+	Make sure to update newMessage correctly. Don't want to see any message and it gets rid
+	of newMessage thing. 
+*/
