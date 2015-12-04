@@ -76,8 +76,7 @@ router.route('/requests/:request_id')
     .delete(function(request, response) {
     	TennisRequest.findById(request.params.request_id, function(err, tennisRequest) {
             if (err)
-                response.send(err);
-            console.log(tennisRequest.messageIds.length);
+                response.send(err);            
             for(i = 0; i < tennisRequest.messageIds.length; i++){
 	    		TennisMessage.remove({
 		            _id: tennisRequest.messageIds[i]
@@ -140,12 +139,7 @@ router.route('/messages')
 					} else {
 						//edit current tennisRequest
 						tennisRequest.newMessage = true;
-						TennisRequest.findByIdAndUpdate(tennisRequest._id, { $push: { messageIds: tennisMessage._id }}, function(err){
-							if (err) {
-				                console.log(err);
-					        } else {
-				                console.log("Successfully added");
-					        }
+						TennisRequest.findByIdAndUpdate(tennisRequest._id, { $push: { messageIds: tennisMessage._id }}, function(err){					
 						});
 						tennisRequest.save(function(err, tennisRequest){
 							if (err) {
@@ -160,22 +154,21 @@ router.route('/messages')
 			}
 		})
 	})
-	.get(function(request, response){
-		TennisMessage.find({ requestId: request.body.requestId }, function(err, tennisMessage) {
+	.get(function(request, response){		
+		TennisMessage.find({ requestId: request.param('requestId') }, function(err, tennisMessage) {
             if (err)
                 response.send(err);
-            if (tennisMessage != null){
-            	TennisRequest.findById(tennisMessage.requestId, function(err, tennisRequest) {
-		            tennisRequest.newMessage = false;	           
-		            tennisRequest.save(function(err, tennisRequest){
-		            	if (err) {
-							response.sent(err);
-						}
-		        	});
-	        	});
-            }      
+            // I have seen all messages              
             response.json(tennisMessage);
-        });
+        });       
+       	TennisRequest.findById(request.param('requestId'), function(err, tennisRequest) {
+            tennisRequest.newMessage = false;	           
+            tennisRequest.save(function(err, tennisRequest){
+            	if (err) {
+					response.sent(err);
+				}
+        	});
+    	});
 	});
 
 // routes for the message model
@@ -184,8 +177,7 @@ router.route('/messages/:message_id')
 	.get(function(request, response) {
         TennisMessage.findById(request.params.message_id, function(err, tennisMessage) {
             if (err)
-                response.send(err);
-            //Update the tennis request          
+                response.send(err);       
         	// response for the message
             response.json(tennisMessage);
         });
@@ -210,6 +202,6 @@ app.listen(port);
 console.log('Magic happens on port ' + port);
 
 /*
-	Make sure to update newMessage correctly. Don't want to see any message and it gets rid
-	of newMessage thing. 
+	Updates:
+
 */
