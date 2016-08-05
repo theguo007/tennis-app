@@ -29,12 +29,33 @@ router.get('/', function(req, res) {
 });
 
 router.post('/user', function(req, res){
-	var user = new User();
-	if(Verify.user(req.body.username, req.body.password, res)){
-		return;
+	if(req.body.username != null && req.body.password != null){
+		User.findOne({username: req.body.username}, function(err, user){
+			if(user == null){
+				var user = new User();
+				var description = req.body.description ? req.body.description : "";
+				user.username = req.body.username;
+				user.password = req.body.password;
+				user.description = "";
+				user.save(function(err, user) {
+					if (err) throw err;
+					res.json({ success: true, message: user });
+				});
+			} else {
+				res.json({success: false, message: "username already taken"});
+			}
+		});
 	} else {
-		return;
+		res.json({success: false, message: "user or pass not included"});
 	}
+});
+
+// Testing Routes
+
+router.get('/user', function(req, res){
+	User.find({}, function(err, users) {
+    	res.json(users);
+  	});
 });
 
 app.use('/api', router);
