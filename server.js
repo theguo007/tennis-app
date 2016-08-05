@@ -8,9 +8,9 @@ var express    = require('express');
 var app        = express();
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
-var TennisRequest = require('./models/requests');
-var TennisMessage = require('./models/messages');
-mongoose.connect('mongodb://localhost/tennis');
+var TennisRequest = require('./app/models/user');
+var TennisMessage = require('./app/models/messages');
+mongoose.connect('mongodb://localhost/tennis1');
 
 // configure app to use bodyParser()
 // this will let us get the data from a POST
@@ -154,13 +154,15 @@ router.route('/messages')
 			}
 		})
 	})
-	.get(function(request, response){		
+	.get(function(request, response){	
+		// query messages by requestId	
 		TennisMessage.find({ requestId: request.param('requestId') }, function(err, tennisMessage) {
             if (err)
                 response.send(err);
-            // I have seen all messages              
+               
             response.json(tennisMessage);
         });       
+        // I have seen all messages
        	TennisRequest.findById(request.param('requestId'), function(err, tennisRequest) {
             tennisRequest.newMessage = false;	           
             tennisRequest.save(function(err, tennisRequest){

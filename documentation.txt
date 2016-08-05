@@ -33,3 +33,8 @@ returns the message id of the newly created message
 
 
 get /messages/:message_id - returns the message information.
+
+
+get /messages - gets all the messages that correspond to a certain request.
+
+in the params, it is necessary that you put in the requestId.
