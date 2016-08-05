@@ -36,7 +36,7 @@ router.post('/user', function(req, res){
 				var description = req.body.description ? req.body.description : "";
 				user.username = req.body.username;
 				user.password = req.body.password;
-				user.description = "";
+				user.description = description;
 				user.save(function(err, user) {
 					if (err) throw err;
 					res.json({ success: true, message: user });
