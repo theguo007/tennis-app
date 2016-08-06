@@ -3,11 +3,11 @@
 // BASE SETUP
 // =============================================================================
 
-var express     = require('express');
-var app         = express();
-var bodyParser  = require('body-parser');
-var morgan      = require('morgan');
-var mongoose    = require('mongoose');
+var express      = require('express');
+var app          = express();
+var bodyParser   = require('body-parser');
+var morgan       = require('morgan');
+var mongoose     = require('mongoose');
 var passwordHash = require('password-hash');
 
 var jwt    = require('jsonwebtoken'); // used to create, sign, and verify tokens
@@ -88,7 +88,7 @@ router.use(function(req, res, next){
 				return res.json({ success: false, message: 'Failed to authenticate token.' });    
 			} else {
 			// if everything is good, save to request for use in other routes
-				req.decoded = decoded;
+				req.userId = decoded;
 				console.log(decoded);   
 				next();
 			}
@@ -113,9 +113,9 @@ router.get('/user', function(req, res){
 // Clear database
 router.delete('/all', function(req, res){
 	User.remove({}, function(err) {
-            if (err) response.send(err);
-            response.json({ message: 'Successfully deleted everything' });
-        });
+        if (err) response.send(err);
+        response.json({ message: 'Successfully deleted everything' });
+    });
 });
 
 app.use('/api', router);
