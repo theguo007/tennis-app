@@ -9,19 +9,21 @@ var bodyParser   = require('body-parser');
 var morgan       = require('morgan');
 var mongoose     = require('mongoose');
 var passwordHash = require('password-hash');
+var jwt    = require('jsonwebtoken');
 
-var jwt    = require('jsonwebtoken'); // used to create, sign, and verify tokens
-var config = require('./config'); // get our config file
-var User   = require('./app/models/user'); // get our mongoose model
+var config = require('./config');
+var User   = require('./app/models/user');
+var Request = require('./app/models/request')
 var Verify = require('./app/controllers/verify');
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 var port = process.env.PORT || 8000;        // set our port
 var router = express.Router();              // get an instance of the express Router
 app.use(morgan('dev'));
-mongoose.connect(config.database); // connect to database
-app.set('superSecret', config.secret); // secret variable
+mongoose.connect(config.database);          // connect to database
+app.set('superSecret', config.secret);      // secret variable
 
 // Routes
 
@@ -101,14 +103,15 @@ router.use(function(req, res, next){
 	}
 });
 
-// Testing Routes
-
-// Get all users
+// Get myself
 router.get('/user', function(req, res){
-	User.find({}, function(err, users) {
-    	res.json(users);
+	User.findById(req.userId, function(err, user) {
+    	res.json(user);
   	});
 });
+
+
+// Testing Routes
 
 // Clear database
 router.delete('/all', function(req, res){

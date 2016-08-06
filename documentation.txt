@@ -1,3 +1,4 @@
 API Documentation for tennis server:
 
 Completely starting over again..
+Current goal is to get authentication up and connect android app to it. 
