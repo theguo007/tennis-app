@@ -106,10 +106,94 @@ router.use(function(req, res, next){
 // Get myself
 router.get('/user', function(req, res){
 	User.findById(req.userId, function(err, user) {
+		if(err) res.send(err);
     	res.json(user);
   	});
 });
 
+// Edit user information (of self)
+router.put('/user', function(req, res){
+	User.findById(req.userId, function(err, user){
+		if(err) res.send(err);
+		if(req.body.name) user.name = req.body.name;
+		if(req.body.description) user.description = req.body.description;
+		if(req.body.contactInfo) user.contactInfo = req.body.contactInfo;
+		user.save(function(err){
+			if(err) res.send(err);
+			res.json({success: true, message: "user updated"});
+		})
+	});
+});
+
+router.put('/password', function(req, res){
+	User.findById(req.userId, function(err, user){
+		if(!req.body.oldPass || !req.body.newPass || !req.body.confirmedPass){
+			res.send({success: false, message: "One of the fields is missing"});
+			return;
+		} else if (!passwordHash.verify(req.body.oldPass, user.password)){
+			res.send({success: false, message: "Old password is incorrect"});
+			return;
+		} else if (req.body.newPass != req.body.confirmedPass){
+			res.send({success: false, message: "New password's do not match"});
+			return;
+		} else {
+			user.password = passwordHash.generate(req.body.newPass);
+			user.save(function(err){
+				if(err) res.send(err);
+				res.json({success: true, message: "password updated successfully"});
+			})
+		}
+	});
+});
+
+// Create a request
+router.post('/request', function(req, res){
+	// Verify that the fields exist and are numbers. Have not fully verified lat/lng bc too lazy
+	if(!req.body.startTime || 
+		!req.body.endTime || 
+		!req.body.lat || 
+		!req.body.lng ||
+		isNaN(req.body.startTime) ||
+		isNaN(req.body.endTime) ||
+		isNaN(req.body.lat) ||
+		isNaN(req.body.lng)){
+		res.send({success: false, message: "One of the fields is missing or is not a number"});
+		return;
+	}
+	var request = new Request();
+	request.userId = req.userId;
+	request.startTime = req.body.startTime;
+	request.endTime = req.body.endTime;
+	request.lat = req.body.lat;
+	request.lng = req.body.lng;
+	request.save(function(err, request) {
+		if (err) throw err;
+		User.findById(req.userId, function(err, user){
+			user.requestIds.push(request.id);
+			user.save(function(err){
+				if (err) throw err;
+				res.send({success: true, message: "successfully created request"});
+			});
+		});
+	});
+});
+
+// Get all requests
+router.get('/request', function(req, res){
+	Request.find(function(err, requests){
+		res.send(requests);
+	});
+});
+
+// Edit request
+router.put('/request/:id', function(req, res){
+
+});
+
+// Delete request
+router.delete('/request/:id', function(req, res){
+
+});
 
 // Testing Routes
 
@@ -119,6 +203,13 @@ router.delete('/all', function(req, res){
         if (err) response.send(err);
         response.json({ message: 'Successfully deleted everything' });
     });
+});
+
+// Get request by id. So far unnecessary
+router.get('/request/:id', function(req, res){
+	Request.findById(req.params.id, function(err, request){
+		res.send(request);
+	});
 });
 
 app.use('/api', router);
