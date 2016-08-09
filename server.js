@@ -52,7 +52,7 @@ router.post('/user', function(req, res){
 			}
 		});
 	} else {
-		res.json({success: false, message: "user or pass not included"});
+		res.json({success: false, message: "required field is missing"});
 	}
 });
 
@@ -179,18 +179,12 @@ router.post('/request', function(req, res){
 	request.lng = req.body.lng;
 	request.save(function(err, request) {
 		if (err) throw err;
-		User.findById(req.userId, function(err, user){
-			user.requestIds.push(request.id);
-			user.save(function(err){
-				if (err) throw err;
-				res.send({success: true, message: "successfully created request"});
-			});
-		});
+		res.send({success: true, message: "successfully created request"});
 	});
 });
 
 // Get all requests
-router.get('/otherRequest', function(req, res){
+router.get('/request', function(req, res){
 	Request.find(function(err, requests){
 		res.send(requests);
 	});
@@ -267,7 +261,7 @@ router.delete('/request/:id', function(req, res){
 
 // Add message to request
 router.post('/message/:request_id', function(req, res){
-	Request.findById(req.params.id, function(err, request){
+	Request.findById(req.params.request_id, function(err, request){
 		if(!request){
 			res.send({success: false, message: "requestId is invalid"});
 			return;
@@ -294,7 +288,7 @@ router.post('/message/:request_id', function(req, res){
 });
 
 router.get('/message', function(req, res){
-	Message.find({recipient: req.userId}, function(err, messages){
+	Message.find({recipientId: req.userId}, function(err, messages){
 		res.send(messages)
 	});
 });
@@ -304,8 +298,14 @@ router.get('/message', function(req, res){
 // Clear database
 router.delete('/all', function(req, res){
 	User.remove({}, function(err) {
-        if (err) response.send(err);
-        response.json({ message: 'Successfully deleted everything' });
+        if (err) res.send(err);
+        Request.remove({}, function(err){
+        	if (err) res.send(err);
+        	Message.remove({}, function(err){
+        		if(err) res.send(err);
+        		res.json({ message: 'Successfully deleted everything'});
+        	});
+        });
     });
 });
 
