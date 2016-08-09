@@ -8,7 +8,6 @@ var userSchema = new Schema({
 	name: String, 								// name of player
 	description: String, 						// short description of skill level
 	contactInfo: String,						// short blurb about best way to reach user
-	requestIds: [String]
 });
 
 module.exports = mongoose.model('User', userSchema);

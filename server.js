@@ -13,7 +13,8 @@ var jwt    = require('jsonwebtoken');
 
 var config = require('./config');
 var User   = require('./app/models/user');
-var Request = require('./app/models/request')
+var Request = require('./app/models/request');
+var Message = require('./app/models/message');
 var Verify = require('./app/controllers/verify');
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -126,6 +127,7 @@ router.put('/user', function(req, res){
 	});
 });
 
+// Change Password
 router.put('/password', function(req, res){
 	User.findById(req.userId, function(err, user){
 		if(!req.body.oldPass || !req.body.newPass || !req.body.confirmedPass){
@@ -161,9 +163,6 @@ router.post('/request', function(req, res){
 		res.send({success: false, message: "One of the fields is missing or is not a number"});
 		return;
 	}
-
-	// Still need to verify that startTime is earlier than end time and that lat and lng are proper values
-	
 	if(Math.abs(Number(req.body.lat)) > 90 || Math.abs(Number(req.body.lng)) > 180){
 		res.send({success: false, message: "invalid GPS coordinates"});
 		return;
@@ -191,8 +190,15 @@ router.post('/request', function(req, res){
 });
 
 // Get all requests
-router.get('/request', function(req, res){
+router.get('/otherRequest', function(req, res){
 	Request.find(function(err, requests){
+		res.send(requests);
+	});
+});
+
+// Get my requests only
+router.get('/myRequest', function(req, res){
+	Request.find({userId: req.userId}, function(err, requests){
 		res.send(requests);
 	});
 });
@@ -256,6 +262,40 @@ router.delete('/request/:id', function(req, res){
 				res.send({success: true, message: "successfully deleted request"});
 			})
 		}
+	});
+});
+
+// Add message to request
+router.post('/message/:request_id', function(req, res){
+	Request.findById(req.params.id, function(err, request){
+		if(!request){
+			res.send({success: false, message: "requestId is invalid"});
+			return;
+		} else if (request.userId == req.userId){
+			res.send({success: false, message: "cannot add message to your own request"});
+			return;
+		} else {
+			var blurb = "";
+			if(req.body.message){
+				blurb = req.body.message;
+			}
+			var message = new Message();
+			message.userId = req.userId;
+			message.requestId = request.id;
+			message.recipientId = request.userId;
+			message.message = blurb;
+			message.save(function(err, message){
+				if(err) throw err;
+				res.send({success: true, message: "successfully created message"});
+				return;
+			});
+		}
+	});	
+});
+
+router.get('/message', function(req, res){
+	Message.find({recipient: req.userId}, function(err, messages){
+		res.send(messages)
 	});
 });
 
