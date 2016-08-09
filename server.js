@@ -33,7 +33,7 @@ router.get('/', function(req, res) {
 
 // Create user
 router.post('/user', function(req, res){
-	if(req.body.username != null && req.body.password != null){
+	if(req.body.username != null && req.body.password != null && req.body.contactInfo){
 		User.findOne({username: req.body.username}, function(err, user){
 			if(user == null){
 				var user = new User();
@@ -41,6 +41,7 @@ router.post('/user', function(req, res){
 				user.username = req.body.username;
 				user.password = passwordHash.generate(req.body.password);
 				user.description = description;
+				user.contactInfo = req.body.contactInfo;
 				user.save(function(err, user) {
 					if (err) throw err;
 					res.json({ success: true, message: user });
@@ -160,6 +161,17 @@ router.post('/request', function(req, res){
 		res.send({success: false, message: "One of the fields is missing or is not a number"});
 		return;
 	}
+
+	// Still need to verify that startTime is earlier than end time and that lat and lng are proper values
+	
+	if(Math.abs(Number(req.body.lat)) > 90 || Math.abs(Number(req.body.lng)) > 180){
+		res.send({success: false, message: "invalid GPS coordinates"});
+		return;
+	} else if (Number(req.body.endTime) < Number(req.body.startTime)){
+		res.send({success: false, message: "ending time cannot be before start time"});
+		return;
+	}
+
 	var request = new Request();
 	request.userId = req.userId;
 	request.startTime = req.body.startTime;
@@ -187,12 +199,64 @@ router.get('/request', function(req, res){
 
 // Edit request
 router.put('/request/:id', function(req, res){
-
+	Request.findById(req.params.id, function(err, request){
+		if(!request){
+			res.send({success: false, message: "requestId is invalid"});
+			return;
+		} else if(request.userId != req.userId){
+			res.send({success: false, message: "user does not have permission to edit"});
+			return;
+		} else {
+			if(req.body.startTime && !isNaN(req.body.startTime)){
+				request.startTime = req.body.startTime;
+			}
+			if(req.body.endTime && !isNaN(req.body.endTime)){
+				request.endTime = req.body.endTime;
+			}
+			if (Number(request.endTime) < Number(request.startTime)){
+				res.send({success: false, message: "ending time cannot be before start time"});
+				return;
+			}
+			if(req.body.lat){
+				if(!isNaN(req.body.lat) && Math.abs(Number(req.body.lat)) <= 90){
+					request.lat = req.body.lat;
+				} else {
+					res.send({success: false, message: "invalid coordinates"});
+				}
+			}
+			if(req.body.lng){
+				if(!isNaN(req.body.lng) && Math.abs(Number(req.body.lng)) <= 90){
+					request.lng = req.body.lng;
+				} else {
+					res.send({success: false, message: "invalid coordinates"});
+				}
+			}
+			request.save(function(err){
+				if(err) throw err;
+				res.send({success: true, message: "successfully edited request"});
+			});
+		}
+	});
 });
 
 // Delete request
 router.delete('/request/:id', function(req, res){
-
+	Request.findById(req.params.id, function(err, request){
+		if(!request){
+			res.send({success: false, message: "requestId is invalid"});
+			return;
+		} else if(request.userId != req.userId){
+			res.send({success: false, message: "user does not have permission to edit"});
+			return;
+		} else {
+			Request.remove({
+				_id: req.params.id
+			}, function(err){
+				if(err) throw err;
+				res.send({success: true, message: "successfully deleted request"});
+			})
+		}
+	});
 });
 
 // Testing Routes
